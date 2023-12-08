@@ -9,6 +9,7 @@
 #define SRC_NVSONBOARD_H_
 
 #include "pico/stdlib.h"
+#include "hardware/flash.h"
 #if CPPUTEST_USE_NEW_MACROS
    #undef new
 #endif
@@ -20,6 +21,9 @@ using namespace std;
 
 #define NVS_MAX_KEY_LEN 16
 
+#define NVS_SIZE 4096
+#define FLASH_WRITE_START (PICO_FLASH_SIZE_BYTES - NVS_SIZE)
+#define FLASH_READ_START  (FLASH_WRITE_START + XIP_BASE)
 typedef enum {
     NVS_TYPE_U8    = 0x01,  /*!< Type uint8_t */
     NVS_TYPE_I8    = 0x11,  /*!< Type int8_t */
@@ -31,6 +35,7 @@ typedef enum {
     NVS_TYPE_I64   = 0x18,  /*!< Type int64_t */
     NVS_TYPE_STR   = 0x21,  /*!< Type string */
     NVS_TYPE_BLOB  = 0x42,  /*!< Type blob */
+	NVS_TYPE_ERASE  = 0xFE,
     NVS_TYPE_ANY   = 0xff   /*!< Must be last */
 } nvs_type_t;
 
@@ -39,6 +44,7 @@ typedef enum {
     NVS_FAIL,
 	NVS_ERR_NOT_FOUND,
 	NVS_ERR_INVALID_NAME,
+	NVS_ERR_INVALID_TYPE,
 	NVS_ERR_NOT_ENOUGH_MEM
 } nvs_err_t;
 
@@ -49,6 +55,12 @@ typedef struct {
 	void *					value;
 
 } nvs_entry_t;
+
+typedef struct {
+	uint32_t 	count;
+	uint32_t   pages;
+	uint32_t	hash;
+} nvs_header_t;
 
 class NVSOnboard {
 public:
@@ -83,14 +95,19 @@ public:
 	nvs_err_t commit();
 	nvs_err_t rollback();
 
+	bool contains(const char *key);
 	unsigned int numKeys();
 	bool isDirty();
 
 private:
 
+	void init();
 	nvs_err_t validKey(const char* key);
+	size_t pagesSize();
+	uint32_t oat_hash(const char *s, size_t len);
 
 	map<string, nvs_entry_t *> xDirty;
+	map<string, nvs_entry_t *> xClean;
 
 };
 
