@@ -64,7 +64,7 @@ typedef struct {
 
 class NVSOnboard {
 public:
-	NVSOnboard();
+	NVSOnboard(bool cleanNVS=false);
 	virtual ~NVSOnboard();
 
 	nvs_err_t set_i8 ( const char* key, int8_t value);
@@ -98,6 +98,8 @@ public:
 	bool contains(const char *key);
 	unsigned int numKeys();
 	bool isDirty();
+
+	void printNVS();
 
 private:
 

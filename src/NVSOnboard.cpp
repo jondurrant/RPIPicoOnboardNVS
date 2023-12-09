@@ -7,8 +7,10 @@
 
 #include "NVSOnboard.h"
 
-NVSOnboard::NVSOnboard() {
-	init();
+NVSOnboard::NVSOnboard(bool cleanNVS) {
+	if (! cleanNVS){
+		init();
+	}
 
 }
 
@@ -353,11 +355,8 @@ nvs_err_t NVSOnboard::commit(){
 	entry = (nvs_entry_t *) (mem + sizeof(nvs_header_t));
 	header->hash = oat_hash((const char *)entry, size - sizeof(nvs_header_t));
 	header->pages = size;
-	printf("hash(%u, %u) = %u\n",  entry,
-			header->pages - sizeof(nvs_header_t),
-			header->hash);
 
-	printf("Saving header %u, %u, %u\n", header->count, header->pages, header->hash);
+	//printf("Flashing header %u, %u, %u\n", header->count, header->pages, header->hash);
 
 	 flash_range_erase(FLASH_WRITE_START, NVS_SIZE);
      flash_range_program(FLASH_WRITE_START, mem, size);
@@ -404,7 +403,7 @@ size_t NVSOnboard::pagesSize(){
 		pagesSize += 256;
 	}
 
-	printf("Size %u, index %u, data %u, Pages %u\n", size, indexSize, dataSize, pagesSize);
+	//printf("Size %u, index %u, data %u, Pages %u\n", size, indexSize, dataSize, pagesSize);
 
 
 	return pagesSize;
@@ -441,11 +440,13 @@ unsigned int NVSOnboard::numKeys(){
 
 	map<string, nvs_entry_t *>::iterator it = xDirty.begin();
 	while (it != xDirty.end()){
-		  if (xClean.count(it->first) == 0){
+		  if (xClean.count(it->first) > 0){
+			  if (it->second->type == NVS_TYPE_ERASE){
+				  count--;
+			  }
+		  } else {
 			  if (it->second->type != NVS_TYPE_ERASE){
 				  count++;
-			  } else {
-				  count--;
 			  }
 		  }
 	      it++;
@@ -482,23 +483,19 @@ void NVSOnboard::init(){
     xDirty.clear();
     xClean.clear();
 
-    printf("Loading header %u, %u, %u\n", header->count, header->pages, header->hash);
+    //printf("Loading header %u, %u, %u\n", header->count, header->pages, header->hash);
     if (header->pages > NVS_SIZE ){
-    	printf("NVS is corrupt\n");
+    	printf("ERROR NVS is corrupt\n");
     	return;
     }
 
 	uint32_t hash = oat_hash((const char *)entry, header->pages - sizeof(nvs_header_t));
-	printf("hash(%u, %u) = %u\n",  entry,
-			header->pages - sizeof(nvs_header_t),
-			hash);
 	if (hash != header->hash){
-		printf("Hash Check Failed\n");
+		printf("ERROR NVS Hash Check Failed\n");
 		return;
 	} else {
-		printf("Hash matches\n");
+		//Hash Passed
 		for (int i=0; i < header->count; i++){
-			printf("Loading key %s\n", entry[i].key);
 			xClean[entry[i].key] = entry;
 		}
 	}
@@ -524,4 +521,48 @@ uint32_t NVSOnboard::oat_hash(const char *s, size_t len){
     h += (h << 15);
 
     return h;
+}
+
+
+void NVSOnboard::printNVS(){
+	printf("NVS keys: %u, Clean %u Dirty %u\n",
+			numKeys(),
+			xClean.size(),
+			xDirty.size());
+
+	int count = 0;
+	int erase = 0;
+
+	map<string, nvs_entry_t *>::iterator it = xClean.begin();
+	while (it != xClean.end()){
+		if (xDirty.count(it->first) == 0){
+			printf("%s [CLEAN] %d\n", it->first.c_str(), it->second->len);
+		} else {
+			if (xDirty[it->first]->type == NVS_TYPE_ERASE){
+				printf("%s [ERASE] %d\n", it->first.c_str(), 0);
+				erase++;
+			} else {
+				printf("%s [CLEAN] %d\n", it->first.c_str(), it->second->len);
+			}
+		}
+		count++;
+		it++;
+	}
+
+	 it = xDirty.begin();
+	while (it != xDirty.end()){
+		if (xClean.count(it->first) == 0){
+			if (it->second->type != NVS_TYPE_ERASE ){
+				printf("%s [NEW] %d\n", it->first.c_str(), it->second->len);
+			} else {
+				printf("%s [ERASE NEW] %d\n", it->first.c_str(), it->second->len);
+				erase++;
+			}
+			count++;
+		}
+		it++;
+	}
+
+	printf("Entries %d Erase %d Total %d\n", count,  erase, count- erase);
+
 }
