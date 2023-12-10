@@ -139,12 +139,14 @@ TEST(NVSTypes,  Commit){
   CHECK_EQUAL(true,  nvs.isDirty());
   CHECK_EQUAL(10, nvs.numKeys());
 
+  //nvs.printNVS();
+
   //Commit
   CHECK_EQUAL(NVS_OK, nvs.commit());
   CHECK_EQUAL(false,  nvs.isDirty());
   CHECK_EQUAL(10, nvs.numKeys());
 
-  nvs.printNVS();
+  //nvs.printNVS();
 
   //Check
   CHECK_EQUAL(NVS_OK,  nvs.get_i8(i8k, &i8c));

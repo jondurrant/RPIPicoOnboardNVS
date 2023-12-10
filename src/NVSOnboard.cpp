@@ -290,6 +290,8 @@ nvs_err_t NVSOnboard::commit(){
 			 memcpy(data, it->second->value, it->second->len);
 			 entry->value = (void *)(FLASH_READ_START + offset);
 			 offset += it->second->len;
+
+			 //printf("Commit %s = %s %u\n", it->first.c_str(), it->second->key, it->second->len);
 			 entry ++;
 		}
 		it++;
@@ -452,7 +454,7 @@ void NVSOnboard::init(){
 	} else {
 		//Hash Passed
 		for (int i=0; i < header->count; i++){
-			xClean[entry[i].key] = entry;
+			xClean[entry[i].key] = &entry[i];
 		}
 	}
 
