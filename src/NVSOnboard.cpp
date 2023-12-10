@@ -19,138 +19,75 @@ NVSOnboard::~NVSOnboard() {
 }
 
 
-nvs_err_t NVSOnboard::set_i8 ( const char* key, int8_t value){
+
+
+nvs_err_t NVSOnboard::set(
+		const char* key,
+		nvs_type_t type,
+		size_t len,
+		const void * value){
 	nvs_err_t res;
+
+	//Check key valid
 	res = validKey(key);
 	if (res != NVS_OK){
 		return res;
 	}
 
+	//Create new entry
+	nvs_entry_t * entry = (nvs_entry_t *)malloc(sizeof(nvs_entry_t));
+	if (entry == NULL){
+		return NVS_ERR_NOT_ENOUGH_MEM;
+	}
+	strcpy(entry->key, key);
+	entry->type = type;
+	entry->len = len;
+	entry->value = malloc(entry->len);
+	memcpy(entry->value,  value, entry->len);
+
+	// *** START CRITICAL SECTION
+	//If existing dirty value then clean it up
 	if (xDirty.count(key) > 0){
 		nvs_entry_t * old = xDirty[key];
 		free(old->value);
 		free(old);
 	}
-	nvs_entry_t * entry = (nvs_entry_t *)malloc(sizeof(nvs_entry_t));
-	if (entry != NULL){
-	strcpy(entry->key, key);
-	entry->type = NVS_TYPE_I8;
-	entry->len = 1;
-	entry->value = malloc(entry->len);
-	memcpy(entry->value, &value, entry->len);
+
+	//Store new entry
 	xDirty[key]=entry;
-	} else {
-		return NVS_ERR_NOT_ENOUGH_MEM;
-	}
+
+	// *** END CRITICAL SECTION
+
 	return NVS_OK;
 }
 
-nvs_err_t NVSOnboard::set_u8 ( const char* key, uint8_t value){
+nvs_err_t NVSOnboard::get(
+		const char* key,
+		nvs_type_t type,
+		size_t * len,
+		void * out_value){
+
+	//Check key is valid
 	nvs_err_t res;
 	res = validKey(key);
 	if (res != NVS_OK){
 		return res;
 	}
 
-	return NVS_FAIL;
-}
-
-nvs_err_t NVSOnboard::set_i16 ( const char* key, int16_t value){
-	nvs_err_t res;
-	res = validKey(key);
-	if (res != NVS_OK){
-		return res;
-	}
-
-	return NVS_FAIL;
-}
-
-nvs_err_t NVSOnboard::set_u16 ( const char* key, uint16_t value){
-	nvs_err_t res;
-	res = validKey(key);
-	if (res != NVS_OK){
-		return res;
-	}
-
-	return NVS_FAIL;
-}
-
-nvs_err_t NVSOnboard::set_i32 ( const char* key, int32_t value){
-	nvs_err_t res;
-	res = validKey(key);
-	if (res != NVS_OK){
-		return res;
-	}
-
-	return NVS_FAIL;
-}
-
-nvs_err_t NVSOnboard::set_u32 ( const char* key, uint32_t value){
-	nvs_err_t res;
-	res = validKey(key);
-	if (res != NVS_OK){
-		return res;
-	}
-
-	return NVS_FAIL;
-}
-
-nvs_err_t NVSOnboard::set_i64 ( const char* key, int64_t value){
-	nvs_err_t res;
-	res = validKey(key);
-	if (res != NVS_OK){
-		return res;
-	}
-
-	return NVS_FAIL;
-}
-
-nvs_err_t NVSOnboard::set_u64 ( const char* key, uint64_t value){
-	nvs_err_t res;
-	res = validKey(key);
-	if (res != NVS_OK){
-		return res;
-	}
-
-	return NVS_FAIL;
-}
-
-nvs_err_t NVSOnboard::set_str ( const char* key, const char* value){
-	nvs_err_t res;
-	res = validKey(key);
-	if (res != NVS_OK){
-		return res;
-	}
-
-	return NVS_FAIL;
-}
-
-nvs_err_t NVSOnboard::set_blob( const char* key, const void* value, size_t length){
-	nvs_err_t res;
-	res = validKey(key);
-	if (res != NVS_OK){
-		return res;
-	}
-
-	return NVS_FAIL;
-}
-
-
-nvs_err_t NVSOnboard::get_i8 ( const char* key, int8_t* out_value){
-	nvs_err_t res;
-	res = validKey(key);
-	if (res != NVS_OK){
-		return res;
-	}
-
+	// Check if on dirty list
 	if (xDirty.count(key) > 0){
 		nvs_entry_t * old = xDirty[key];
 		if (old->type == NVS_TYPE_ERASE){
 			return NVS_ERR_NOT_FOUND;
 		}
-		if (old->type == NVS_TYPE_I8){
-			memcpy(out_value, old->value, old->len);
-			return NVS_OK;
+		if (old->type == type){
+			if (old->len <= *len) {
+				memcpy(out_value, old->value, old->len);
+				*len = old->len;
+				return NVS_OK;
+			} else {
+				return NVS_ERR_NOT_ENOUGH_MEM;
+			}
 		} else {
 			return NVS_ERR_INVALID_TYPE;
 		}
@@ -158,101 +95,120 @@ nvs_err_t NVSOnboard::get_i8 ( const char* key, int8_t* out_value){
 
 	if (xClean.count(key) > 0){
 		nvs_entry_t * old = xClean[key];
-		memcpy(out_value, old->value, old->len);
-		return NVS_OK;
+		if (old->type == type){
+			if (old->len <= *len) {
+				memcpy(out_value, old->value, old->len);
+				*len = old->len;
+				return NVS_OK;
+			} else {
+				return NVS_ERR_NOT_ENOUGH_MEM;
+			}
+		} else {
+			return NVS_ERR_INVALID_TYPE;
+		}
 	}
 
 	return NVS_ERR_NOT_FOUND;
 }
 
-nvs_err_t NVSOnboard::get_u8 ( const char* key, uint8_t* out_value){
-	nvs_err_t res;
-	res = validKey(key);
-	if (res != NVS_OK){
-		return res;
-	}
 
-	return NVS_FAIL;
+
+nvs_err_t NVSOnboard::set_i8 ( const char* key, int8_t value){
+	return set(key, NVS_TYPE_I8, 1, &value);
+}
+
+nvs_err_t NVSOnboard::set_u8 ( const char* key, uint8_t value){
+	return set(key, NVS_TYPE_U8, 1, &value);
+}
+
+nvs_err_t NVSOnboard::set_i16 ( const char* key, int16_t value){
+	return set(key, NVS_TYPE_I16, 2, &value);
+}
+
+nvs_err_t NVSOnboard::set_u16 ( const char* key, uint16_t value){
+	return set(key, NVS_TYPE_U16, 2, &value);
+}
+
+nvs_err_t NVSOnboard::set_i32 ( const char* key, int32_t value){
+	return set(key, NVS_TYPE_I32, 4, &value);
+}
+
+nvs_err_t NVSOnboard::set_u32 ( const char* key, uint32_t value){
+	return set(key, NVS_TYPE_U32, 4, &value);
+}
+
+nvs_err_t NVSOnboard::set_i64 ( const char* key, int64_t value){
+	return set(key, NVS_TYPE_I64, 8, &value);
+}
+
+nvs_err_t NVSOnboard::set_u64 ( const char* key, uint64_t value){
+	return set(key, NVS_TYPE_U64, 8, &value);
+}
+
+nvs_err_t NVSOnboard::set_str ( const char* key, const char* value){
+	return set(key, NVS_TYPE_STR, strlen(value)+1, value);
+}
+
+nvs_err_t NVSOnboard::set_blob(
+		const char* key,
+		const void* value,
+		size_t length){
+	return set(key, NVS_TYPE_BLOB, length, value);
+}
+
+
+nvs_err_t NVSOnboard::get_i8 ( const char* key, int8_t* out_value){
+	size_t len = 1;
+	return get(key, NVS_TYPE_I8, &len, out_value);
+}
+
+nvs_err_t NVSOnboard::get_u8 ( const char* key, uint8_t* out_value){
+	size_t len = 1;
+	return get(key, NVS_TYPE_U8, &len, out_value);
 }
 
 nvs_err_t NVSOnboard::get_i16 ( const char* key, int16_t* out_value){
-	nvs_err_t res;
-	res = validKey(key);
-	if (res != NVS_OK){
-		return res;
-	}
-
-	return NVS_FAIL;
+	size_t len = 2;
+	return get(key, NVS_TYPE_I16, &len, out_value);
 }
 
 nvs_err_t NVSOnboard::get_u16 ( const char* key, uint16_t* out_value){
-	nvs_err_t res;
-	res = validKey(key);
-	if (res != NVS_OK){
-		return res;
-	}
-
-	return NVS_FAIL;
+	size_t len = 2;
+	return get(key, NVS_TYPE_U16, &len, out_value);
 }
 
 nvs_err_t NVSOnboard::get_i32 ( const char* key, int32_t* out_value){
-	nvs_err_t res;
-	res = validKey(key);
-	if (res != NVS_OK){
-		return res;
-	}
-
-	return NVS_FAIL;
+	size_t len = 4;
+	return get(key, NVS_TYPE_I32, &len, out_value);
 }
 
 nvs_err_t NVSOnboard::get_u32 ( const char* key, uint32_t* out_value){
-	nvs_err_t res;
-	res = validKey(key);
-	if (res != NVS_OK){
-		return res;
-	}
-
-	return NVS_FAIL;
+	size_t len = 4;
+	return get(key, NVS_TYPE_U32, &len, out_value);
 }
 
 nvs_err_t NVSOnboard::get_i64 ( const char* key, int64_t* out_value){
-	nvs_err_t res;
-	res = validKey(key);
-	if (res != NVS_OK){
-		return res;
-	}
-
-	return NVS_FAIL;
+	size_t len = 8;
+	return get(key, NVS_TYPE_I64,  &len, out_value);
 }
 
 nvs_err_t NVSOnboard::get_u64 ( const char* key, uint64_t* out_value){
-	nvs_err_t res;
-	res = validKey(key);
-	if (res != NVS_OK){
-		return res;
-	}
-
-	return NVS_FAIL;
+	size_t len = 8;
+	return get(key, NVS_TYPE_U64, &len, out_value);
 }
 
-nvs_err_t NVSOnboard::get_str ( const char* key, char* out_value, size_t* length){
-	nvs_err_t res;
-	res = validKey(key);
-	if (res != NVS_OK){
-		return res;
-	}
-
-	return NVS_FAIL;
+nvs_err_t NVSOnboard::get_str (
+		const char* key,
+		char* out_value,
+		size_t* length){
+	return get(key, NVS_TYPE_STR,  length, out_value);
 }
 
-nvs_err_t NVSOnboard::get_blob( const char* key, void* out_value, size_t* length){
-	nvs_err_t res;
-	res = validKey(key);
-	if (res != NVS_OK){
-		return res;
-	}
-
-	return NVS_FAIL;
+nvs_err_t NVSOnboard::get_blob(
+		const char* key,
+		void* out_value,
+		size_t* length){
+	return get(key, NVS_TYPE_BLOB,  length, out_value);
 }
 
 

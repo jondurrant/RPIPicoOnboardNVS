@@ -104,6 +104,8 @@ public:
 private:
 
 	void init();
+	nvs_err_t set(const char* key,  nvs_type_t type, size_t len, const void * value);
+	nvs_err_t get(const char* key,  nvs_type_t type, size_t * len, void * out_value);
 	nvs_err_t validKey(const char* key);
 	size_t pagesSize();
 	uint32_t oat_hash(const char *s, size_t len);

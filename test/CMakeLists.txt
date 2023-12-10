@@ -17,6 +17,7 @@ include(../src/files.cmake)
 add_executable(${TEST_NAME}
 	test_main.cpp
 	TestNVS.cpp
+	TestNVSTypes.cpp
 	
 	${SRC_FILES}
 )
