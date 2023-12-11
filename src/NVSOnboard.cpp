@@ -7,6 +7,8 @@
 
 #include "NVSOnboard.h"
 
+#include "hardware/sync.h"
+
 NVSOnboard * NVSOnboard::pSingleton = NULL;
 
 NVSOnboard * NVSOnboard::getInstance(bool cleanNVS){
@@ -270,18 +272,23 @@ nvs_err_t NVSOnboard::erase_key( const char* key){
 
 nvs_err_t NVSOnboard::erase_all(){
 
+	nvs_err_t res = NVS_OK;
 	map<string, nvs_entry_t *>::iterator it = xDirty.begin();
 	while (it != xDirty.end()){
-		erase_key(it->first.c_str());
+		res = erase_key(it->first.c_str());
+		if (res != NVS_OK)
+			return res;
 		it++;
 	}
 	it = xClean.begin();
 	while (it != xClean.end()){
-		erase_key(it->first.c_str());
+		res = erase_key(it->first.c_str());
+		if (res != NVS_OK)
+		    return res;
 		 it++;
 	}
 
-	return NVS_OK;
+	return res;
 }
 
 nvs_err_t NVSOnboard::commit(){
@@ -333,8 +340,11 @@ nvs_err_t NVSOnboard::commit(){
 
 	//printf("Flashing header %u, %u, %u\n", header->count, header->pages, header->hash);
 
+	 //CRITICAL SECTION - NO INTRUPT OF MULTIPROCESSOR
+	uint32_t status = save_and_disable_interrupts();
 	 flash_range_erase(FLASH_WRITE_START, NVS_SIZE);
      flash_range_program(FLASH_WRITE_START, mem, size);
+    restore_interrupts(status);
 
      free(mem);
      rollback();

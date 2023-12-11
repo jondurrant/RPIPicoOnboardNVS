@@ -6,8 +6,25 @@
 #include "NVSOnboard.h"
 
 
+bool timerCB (repeating_timer_t *rt){
+	int r = 2 * 7;
+	return true;
+}
+
+
+
 TEST_GROUP(NVS){
+	repeating_timer_t xTimer;
+    void setup(){
+    	add_repeating_timer_us	(
+    			1000,
+				timerCB,
+				NULL,
+				&xTimer
+    	);
+	}
 	 void teardown(){
+		 cancel_repeating_timer (&xTimer);
 		 NVSOnboard::delInstance();
 	 }
 };

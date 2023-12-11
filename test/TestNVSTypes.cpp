@@ -7,7 +7,7 @@
 
 
 TEST_GROUP(NVSTypes){
-	 void teardown(){
+	void teardown(){
 		 NVSOnboard::delInstance();
 	 }
 };
