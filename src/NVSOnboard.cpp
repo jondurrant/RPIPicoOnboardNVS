@@ -7,6 +7,23 @@
 
 #include "NVSOnboard.h"
 
+NVSOnboard * NVSOnboard::pSingleton = NULL;
+
+NVSOnboard * NVSOnboard::getInstance(bool cleanNVS){
+	if (NVSOnboard::pSingleton == NULL) {
+		NVSOnboard::pSingleton = new NVSOnboard(cleanNVS);
+	}
+	return NVSOnboard::pSingleton;
+}
+
+void  NVSOnboard::delInstance(){
+	if (NVSOnboard::pSingleton != NULL) {
+		delete(NVSOnboard::pSingleton);
+		NVSOnboard::pSingleton = NULL;
+	}
+}
+
+
 NVSOnboard::NVSOnboard(bool cleanNVS) {
 	if (! cleanNVS){
 		init();
@@ -45,7 +62,7 @@ nvs_err_t NVSOnboard::set(
 	entry->value = malloc(entry->len);
 	memcpy(entry->value,  value, entry->len);
 
-	// *** START CRITICAL SECTION
+	// *** START THREAD SEMAPHORE
 	//If existing dirty value then clean it up
 	if (xDirty.count(key) > 0){
 		nvs_entry_t * old = xDirty[key];
@@ -56,7 +73,7 @@ nvs_err_t NVSOnboard::set(
 	//Store new entry
 	xDirty[key]=entry;
 
-	// *** END CRITICAL SECTION
+	// *** END THREAD SEMAPHORE
 
 	return NVS_OK;
 }
@@ -524,3 +541,13 @@ void NVSOnboard::printNVS(){
 	printf("Entries %d Erase %d Total %d\n", count,  erase, count- erase);
 
 }
+
+nvs_err_t NVSOnboard::clear(){
+	nvs_err_t res = rollback();
+	if (res != NVS_OK){
+		return res;
+	}
+	xClean.clear();
+	return NVS_OK;
+}
+

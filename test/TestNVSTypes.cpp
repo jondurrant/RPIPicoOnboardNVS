@@ -7,11 +7,14 @@
 
 
 TEST_GROUP(NVSTypes){
+	 void teardown(){
+		 NVSOnboard::delInstance();
+	 }
 };
 
 
 TEST(NVSTypes,  Dirty){
-  NVSOnboard nvs(true);
+  NVSOnboard * nvs = NVSOnboard::getInstance(true);
   char 		i8k[] = "i8";
   int8_t 		i8v = -23;
   int8_t 		i8c;
@@ -43,47 +46,47 @@ TEST(NVSTypes,  Dirty){
   size_t len=20;
 
   //Store key
-  CHECK_EQUAL(NVS_OK, nvs.set_i8(i8k,  i8v));
-  CHECK_EQUAL(NVS_OK, nvs.set_u8(u8k,  u8v));
-  CHECK_EQUAL(NVS_OK, nvs.set_i16(i16k,  i16v));
-  CHECK_EQUAL(NVS_OK, nvs.set_u16(u16k,  u16v));
-  CHECK_EQUAL(NVS_OK, nvs.set_i32(i32k,  i32v));
-  CHECK_EQUAL(NVS_OK, nvs.set_u32(u32k,  u32v));
-  CHECK_EQUAL(NVS_OK, nvs.set_i64(i64k,  i64v));
-  CHECK_EQUAL(NVS_OK, nvs.set_u64(u64k,  u64v));
+  CHECK_EQUAL(NVS_OK, nvs->set_i8(i8k,  i8v));
+  CHECK_EQUAL(NVS_OK, nvs->set_u8(u8k,  u8v));
+  CHECK_EQUAL(NVS_OK, nvs->set_i16(i16k,  i16v));
+  CHECK_EQUAL(NVS_OK, nvs->set_u16(u16k,  u16v));
+  CHECK_EQUAL(NVS_OK, nvs->set_i32(i32k,  i32v));
+  CHECK_EQUAL(NVS_OK, nvs->set_u32(u32k,  u32v));
+  CHECK_EQUAL(NVS_OK, nvs->set_i64(i64k,  i64v));
+  CHECK_EQUAL(NVS_OK, nvs->set_u64(u64k,  u64v));
 
-  CHECK_EQUAL(NVS_OK, nvs.set_str(strk,  strv));
-  CHECK_EQUAL(NVS_OK, nvs.set_blob(blobk,  strv, strlen(strv)+1));
+  CHECK_EQUAL(NVS_OK, nvs->set_str(strk,  strv));
+  CHECK_EQUAL(NVS_OK, nvs->set_blob(blobk,  strv, strlen(strv)+1));
 
   //Check Count
-  CHECK_EQUAL(true,  nvs.isDirty());
-  CHECK_EQUAL(10, nvs.numKeys());
+  CHECK_EQUAL(true,  nvs->isDirty());
+  CHECK_EQUAL(10, nvs->numKeys());
 
   //Check values
-  CHECK_EQUAL(NVS_OK,  nvs.get_i8(i8k, &i8c));
+  CHECK_EQUAL(NVS_OK,  nvs->get_i8(i8k, &i8c));
   CHECK_EQUAL(i8v, i8c);
-  CHECK_EQUAL(NVS_OK,  nvs.get_u8(u8k, &u8c));
+  CHECK_EQUAL(NVS_OK,  nvs->get_u8(u8k, &u8c));
   CHECK_EQUAL(u8v, u8c);
-  CHECK_EQUAL(NVS_OK,  nvs.get_i16(i16k, &i16c));
+  CHECK_EQUAL(NVS_OK,  nvs->get_i16(i16k, &i16c));
   CHECK_EQUAL(i16v, i16c);
-  CHECK_EQUAL(NVS_OK,  nvs.get_u16(u16k, &u16c));
+  CHECK_EQUAL(NVS_OK,  nvs->get_u16(u16k, &u16c));
   CHECK_EQUAL(u16v, u16c);
-  CHECK_EQUAL(NVS_OK,  nvs.get_i32(i32k, &i32c));
+  CHECK_EQUAL(NVS_OK,  nvs->get_i32(i32k, &i32c));
   CHECK_EQUAL(i32v, i32c);
-  CHECK_EQUAL(NVS_OK,  nvs.get_u32(u32k, &u32c));
+  CHECK_EQUAL(NVS_OK,  nvs->get_u32(u32k, &u32c));
   CHECK_EQUAL(u32v, u32c);
-  CHECK_EQUAL(NVS_OK,  nvs.get_i64(i64k, &i64c));
+  CHECK_EQUAL(NVS_OK,  nvs->get_i64(i64k, &i64c));
   CHECK_EQUAL(i64v, i64c);
-  CHECK_EQUAL(NVS_OK,  nvs.get_u64(u64k, &u64c));
+  CHECK_EQUAL(NVS_OK,  nvs->get_u64(u64k, &u64c));
   CHECK_EQUAL(u64v, u64c);
 
   len=20;
-  CHECK_EQUAL(NVS_OK,  nvs.get_str(strk,  strc,  &len));
+  CHECK_EQUAL(NVS_OK,  nvs->get_str(strk,  strc,  &len));
   CHECK(strcmp(strv, strc) == 0);
   CHECK_EQUAL(len, strlen(strv) + 1);
 
   len=20;
- CHECK_EQUAL(NVS_OK,  nvs.get_blob(blobk,  strc,  &len));
+ CHECK_EQUAL(NVS_OK,  nvs->get_blob(blobk,  strc,  &len));
  CHECK(strcmp(strv, strc) == 0);
  CHECK_EQUAL(len, strlen(strv) + 1);
 
@@ -91,7 +94,7 @@ TEST(NVSTypes,  Dirty){
 
 
 TEST(NVSTypes,  Commit){
-  NVSOnboard nvs(true);
+  NVSOnboard * nvs = NVSOnboard::getInstance(true);
   char 		i8k[] = "i8";
   int8_t 		i8v = -23;
   int8_t 		i8c;
@@ -123,56 +126,56 @@ TEST(NVSTypes,  Commit){
   size_t len=20;
 
   //Store key
-  CHECK_EQUAL(NVS_OK, nvs.set_i8(i8k,  i8v));
-  CHECK_EQUAL(NVS_OK, nvs.set_u8(u8k,  u8v));
-  CHECK_EQUAL(NVS_OK, nvs.set_i16(i16k,  i16v));
-  CHECK_EQUAL(NVS_OK, nvs.set_u16(u16k,  u16v));
-  CHECK_EQUAL(NVS_OK, nvs.set_i32(i32k,  i32v));
-  CHECK_EQUAL(NVS_OK, nvs.set_u32(u32k,  u32v));
-  CHECK_EQUAL(NVS_OK, nvs.set_i64(i64k,  i64v));
-  CHECK_EQUAL(NVS_OK, nvs.set_u64(u64k,  u64v));
+  CHECK_EQUAL(NVS_OK, nvs->set_i8(i8k,  i8v));
+  CHECK_EQUAL(NVS_OK, nvs->set_u8(u8k,  u8v));
+  CHECK_EQUAL(NVS_OK, nvs->set_i16(i16k,  i16v));
+  CHECK_EQUAL(NVS_OK, nvs->set_u16(u16k,  u16v));
+  CHECK_EQUAL(NVS_OK, nvs->set_i32(i32k,  i32v));
+  CHECK_EQUAL(NVS_OK, nvs->set_u32(u32k,  u32v));
+  CHECK_EQUAL(NVS_OK, nvs->set_i64(i64k,  i64v));
+  CHECK_EQUAL(NVS_OK, nvs->set_u64(u64k,  u64v));
 
-  CHECK_EQUAL(NVS_OK, nvs.set_str(strk,  strv));
-  CHECK_EQUAL(NVS_OK, nvs.set_blob(blobk,  strv, strlen(strv)+1));
+  CHECK_EQUAL(NVS_OK, nvs->set_str(strk,  strv));
+  CHECK_EQUAL(NVS_OK, nvs->set_blob(blobk,  strv, strlen(strv)+1));
 
   //Check Count
-  CHECK_EQUAL(true,  nvs.isDirty());
-  CHECK_EQUAL(10, nvs.numKeys());
+  CHECK_EQUAL(true,  nvs->isDirty());
+  CHECK_EQUAL(10, nvs->numKeys());
 
-  //nvs.printNVS();
+  //nvs->printNVS();
 
   //Commit
-  CHECK_EQUAL(NVS_OK, nvs.commit());
-  CHECK_EQUAL(false,  nvs.isDirty());
-  CHECK_EQUAL(10, nvs.numKeys());
+  CHECK_EQUAL(NVS_OK, nvs->commit());
+  CHECK_EQUAL(false,  nvs->isDirty());
+  CHECK_EQUAL(10, nvs->numKeys());
 
-  //nvs.printNVS();
+  //nvs->printNVS();
 
   //Check
-  CHECK_EQUAL(NVS_OK,  nvs.get_i8(i8k, &i8c));
+  CHECK_EQUAL(NVS_OK,  nvs->get_i8(i8k, &i8c));
   CHECK_EQUAL(i8v, i8c);
-  CHECK_EQUAL(NVS_OK,  nvs.get_u8(u8k, &u8c));
+  CHECK_EQUAL(NVS_OK,  nvs->get_u8(u8k, &u8c));
   CHECK_EQUAL(u8v, u8c);
-  CHECK_EQUAL(NVS_OK,  nvs.get_i16(i16k, &i16c));
+  CHECK_EQUAL(NVS_OK,  nvs->get_i16(i16k, &i16c));
   CHECK_EQUAL(i16v, i16c);
-  CHECK_EQUAL(NVS_OK,  nvs.get_u16(u16k, &u16c));
+  CHECK_EQUAL(NVS_OK,  nvs->get_u16(u16k, &u16c));
   CHECK_EQUAL(u16v, u16c);
-  CHECK_EQUAL(NVS_OK,  nvs.get_i32(i32k, &i32c));
+  CHECK_EQUAL(NVS_OK,  nvs->get_i32(i32k, &i32c));
   CHECK_EQUAL(i32v, i32c);
-  CHECK_EQUAL(NVS_OK,  nvs.get_u32(u32k, &u32c));
+  CHECK_EQUAL(NVS_OK,  nvs->get_u32(u32k, &u32c));
   CHECK_EQUAL(u32v, u32c);
-  CHECK_EQUAL(NVS_OK,  nvs.get_i64(i64k, &i64c));
+  CHECK_EQUAL(NVS_OK,  nvs->get_i64(i64k, &i64c));
   CHECK_EQUAL(i64v, i64c);
-  CHECK_EQUAL(NVS_OK,  nvs.get_u64(u64k, &u64c));
+  CHECK_EQUAL(NVS_OK,  nvs->get_u64(u64k, &u64c));
   CHECK_EQUAL(u64v, u64c);
 
   len=20;
-  CHECK_EQUAL(NVS_OK,  nvs.get_str(strk,  strc,  &len));
+  CHECK_EQUAL(NVS_OK,  nvs->get_str(strk,  strc,  &len));
   CHECK(strcmp(strv, strc) == 0);
   CHECK_EQUAL(len, strlen(strv) + 1);
 
   len=20;
- CHECK_EQUAL(NVS_OK,  nvs.get_blob(blobk,  strc,  &len));
+ CHECK_EQUAL(NVS_OK,  nvs->get_blob(blobk,  strc,  &len));
  CHECK(strcmp(strv, strc) == 0);
  CHECK_EQUAL(len, strlen(strv) + 1);
 

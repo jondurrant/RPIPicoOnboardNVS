@@ -64,7 +64,9 @@ typedef struct {
 
 class NVSOnboard {
 public:
-	NVSOnboard(bool cleanNVS=false);
+	static NVSOnboard * getInstance(bool cleanNVS=false);
+	static void  delInstance();
+
 	virtual ~NVSOnboard();
 
 	nvs_err_t set_i8 ( const char* key, int8_t value);
@@ -94,18 +96,24 @@ public:
 	nvs_err_t erase_all();
 	nvs_err_t commit();
 	nvs_err_t rollback();
+	nvs_err_t clear();
 
 	bool contains(const char *key);
 	unsigned int numKeys();
 	bool isDirty();
 
+
 	void printNVS();
 
-private:
-
+protected:
+	NVSOnboard(bool cleanNVS=false);
 	void init();
 	nvs_err_t set(const char* key,  nvs_type_t type, size_t len, const void * value);
 	nvs_err_t get(const char* key,  nvs_type_t type, size_t * len, void * out_value);
+
+
+private:
+	static NVSOnboard * pSingleton;
 	nvs_err_t validKey(const char* key);
 	size_t pagesSize();
 	uint32_t oat_hash(const char *s, size_t len);
