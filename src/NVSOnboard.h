@@ -30,6 +30,15 @@ using namespace std;
 #define NVS_SIZE 4096
 #endif
 
+#ifndef NVS_CORES
+//Set NVS_CORES to 2 to enable multicore support
+#define NVS_CORES 1
+#endif
+
+#ifndef NVS_WAIT
+#define NVS_WAIT 10000
+#endif
+
 
 //Write and Read address for the base of the NVS region being used
 #define FLASH_WRITE_START (PICO_FLASH_SIZE_BYTES - NVS_SIZE)

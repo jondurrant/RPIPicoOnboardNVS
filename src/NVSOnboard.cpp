@@ -9,6 +9,11 @@
 
 #include "hardware/sync.h"
 
+#if NVS_CORES == 2
+#include "pico/multicore.h"
+#include "hardware/structs/sio.h"
+#endif
+
 NVSOnboard * NVSOnboard::pSingleton = NULL;
 
 NVSOnboard * NVSOnboard::getInstance(bool cleanNVS){
@@ -340,8 +345,18 @@ nvs_err_t NVSOnboard::commit(){
 
 	//printf("Flashing header %u, %u, %u\n", header->count, header->pages, header->hash);
 
-	 //CRITICAL SECTION - NO INTRUPT OF MULTIPROCESSOR
+	 //CRITICAL SECTION - NO INTRUP1GT OF MULTIPROCESSOR
 	uint32_t status = save_and_disable_interrupts();
+#if NVS_CORES == 2
+	uint core = 1;
+	bool lockout = false;
+	if ((uint8_t)sio_hw->cpuid == (uint8_t) core){
+		core = 0;
+	}
+	if (multicore_lockout_victim_is_initialized ( core)){
+		lockout = multicore_lockout_start_timeout_us(NVS_WAIT);
+	}
+#endif
 	 flash_range_erase(FLASH_WRITE_START, NVS_SIZE);
      flash_range_program(FLASH_WRITE_START, mem, size);
     restore_interrupts(status);
@@ -349,6 +364,11 @@ nvs_err_t NVSOnboard::commit(){
      free(mem);
      rollback();
      init();
+#if NVS_CORES == 2
+     if (lockout){
+    	 lockout = multicore_lockout_end_timeout_us (NVS_WAIT);
+     }
+#endif
 
      return NVS_OK;
 
