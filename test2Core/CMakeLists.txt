@@ -1,4 +1,4 @@
-set(TEST_NAME "test")
+set(TEST_NAME "test2Core")
 set(PICO_CXX_ENABLE_EXCEPTIONS 1)
 
 # CppUTest
@@ -16,14 +16,17 @@ include(../src/files.cmake)
 
 add_executable(${TEST_NAME}
 	test_main.cpp
-	TestNVS.cpp
-	TestNVSTypes.cpp
+	TestNVSMulticore.cpp
 	
 	${SRC_FILES}
 )
         
 target_include_directories(${TEST_NAME} PUBLIC
 	"${CMAKE_CURRENT_LIST_DIR}/../src"
+)
+
+target_compile_definitions(${TEST_NAME} PRIVATE
+	NVS_CORES=2
 )
 
        
@@ -33,6 +36,7 @@ target_link_libraries(${TEST_NAME} PRIVATE
 	pico_stdlib
 	CppUTest::CppUTest
     CppUTest::CppUTestExt
+    pico_multicore
 )
 
 target_compile_definitions(${TEST_NAME} PRIVATE
