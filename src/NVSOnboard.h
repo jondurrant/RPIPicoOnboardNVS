@@ -19,6 +19,13 @@ using namespace std;
    #include "CppUTest/MemoryLeakDetectorNewMacros.h"
 #endif
 
+//FreeRTOS Kernel Support
+#ifdef LIB_FREERTOS_KERNEL
+#include "FreeRTOS.h"
+#include "task.h"
+#include "semphr.h"
+#endif
+
 
 #ifndef NVS_MAX_KEY_LEN
 //Maximum size of the key in key value pairs
@@ -36,7 +43,7 @@ using namespace std;
 #endif
 
 #ifndef NVS_WAIT
-#define NVS_WAIT 10000
+#define NVS_WAIT 10000   //usecs
 #endif
 
 
@@ -67,7 +74,8 @@ typedef enum {
 	NVS_ERR_NOT_FOUND,
 	NVS_ERR_INVALID_NAME,
 	NVS_ERR_INVALID_TYPE,
-	NVS_ERR_NOT_ENOUGH_MEM
+	NVS_ERR_NOT_ENOUGH_MEM,
+	NVS_ERR_LOCK_FAILED
 } nvs_err_t;
 
 //Entry structure used to build a index table in Flash
@@ -405,6 +413,10 @@ private:
 
 	map<string, nvs_entry_t *> xDirty;
 	map<string, nvs_entry_t *> xClean;
+
+#ifdef LIB_FREERTOS_KERNEL
+	SemaphoreHandle_t xWriteSemaphore = NULL;
+#endif
 
 };
 

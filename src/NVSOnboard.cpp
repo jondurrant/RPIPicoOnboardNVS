@@ -14,6 +14,8 @@
 #include "hardware/structs/sio.h"
 #endif
 
+
+
 NVSOnboard * NVSOnboard::pSingleton = NULL;
 
 NVSOnboard * NVSOnboard::getInstance(bool cleanNVS){
@@ -32,14 +34,26 @@ void  NVSOnboard::delInstance(){
 
 
 NVSOnboard::NVSOnboard(bool cleanNVS) {
+#ifdef LIB_FREERTOS_KERNEL
+	xWriteSemaphore = xSemaphoreCreateBinary();
+	if (xWriteSemaphore == NULL){
+		printf("NVSOnboard: Failed to create Semaphore\n");
+	} else {
+		xSemaphoreGive(xWriteSemaphore);
+	}
+#endif
 	if (! cleanNVS){
 		init();
 	}
-
 }
 
 NVSOnboard::~NVSOnboard() {
 	rollback();
+#ifdef LIB_FREERTOS_KERNEL
+	if (xWriteSemaphore != NULL){
+		vSemaphoreDelete(xWriteSemaphore);
+	}
+#endif
 }
 
 
@@ -70,6 +84,13 @@ nvs_err_t NVSOnboard::set(
 	memcpy(entry->value,  value, entry->len);
 
 	// *** START THREAD SEMAPHORE
+#ifdef LIB_FREERTOS_KERNEL
+	if (xWriteSemaphore != NULL){
+		if (xSemaphoreTake(xWriteSemaphore, NVS_WAIT/1000) != pdTRUE){
+			return NVS_ERR_LOCK_FAILED;
+		}
+	}
+#endif
 	//If existing dirty value then clean it up
 	if (xDirty.count(key) > 0){
 		nvs_entry_t * old = xDirty[key];
@@ -79,7 +100,11 @@ nvs_err_t NVSOnboard::set(
 
 	//Store new entry
 	xDirty[key]=entry;
-
+#ifdef LIB_FREERTOS_KERNEL
+	if (xWriteSemaphore != NULL){
+		xSemaphoreGive(xWriteSemaphore);
+	}
+#endif
 	// *** END THREAD SEMAPHORE
 
 	return NVS_OK;
@@ -99,23 +124,37 @@ nvs_err_t NVSOnboard::get(
 	}
 
 	// Check if on dirty list
+	// On Change the dirty list briefly become unstable, so puting in a semaphore
 	if (xDirty.count(key) > 0){
+#ifdef LIB_FREERTOS_KERNEL
+		if (xWriteSemaphore != NULL){
+			if (xSemaphoreTake(xWriteSemaphore, NVS_WAIT/1000) != pdTRUE){
+				return NVS_ERR_LOCK_FAILED;
+			}
+		}
+#endif
 		nvs_entry_t * old = xDirty[key];
 		if (old->type == NVS_TYPE_ERASE){
-			return NVS_ERR_NOT_FOUND;
-		}
-		if (old->type == type){
+			res = NVS_ERR_NOT_FOUND;
+		} else if (old->type == type){
 			if (old->len <= *len) {
 				memcpy(out_value, old->value, old->len);
 				*len = old->len;
-				return NVS_OK;
+				res = NVS_OK;
 			} else {
-				return NVS_ERR_NOT_ENOUGH_MEM;
+				res = NVS_ERR_NOT_ENOUGH_MEM;
 			}
 		} else {
-			return NVS_ERR_INVALID_TYPE;
+			res = NVS_ERR_INVALID_TYPE;
 		}
+#ifdef LIB_FREERTOS_KERNEL
+		if (xWriteSemaphore != NULL){
+			xSemaphoreGive(xWriteSemaphore);
+		}
+#endif
+		return res;
 	}
+
 
 	if (xClean.count(key) > 0){
 		nvs_entry_t * old = xClean[key];
@@ -346,6 +385,9 @@ nvs_err_t NVSOnboard::commit(){
 	//printf("Flashing header %u, %u, %u\n", header->count, header->pages, header->hash);
 
 	 //CRITICAL SECTION - NO INTRUP1GT OF MULTIPROCESSOR
+#ifdef LIB_FREERTOS_KERNEL
+	taskENTER_CRITICAL();
+#else
 	uint32_t status = save_and_disable_interrupts();
 #if NVS_CORES == 2
 	uint core = 1;
@@ -356,19 +398,25 @@ nvs_err_t NVSOnboard::commit(){
 	if (multicore_lockout_victim_is_initialized ( core)){
 		lockout = multicore_lockout_start_timeout_us(NVS_WAIT);
 	}
-#endif
+#endif //NVS_CORES
+#endif //LIB_FREERTOS_KERNEL
 	 flash_range_erase(FLASH_WRITE_START, NVS_SIZE);
      flash_range_program(FLASH_WRITE_START, mem, size);
-    restore_interrupts(status);
 
-     free(mem);
-     rollback();
-     init();
+#ifdef LIB_FREERTOS_KERNEL
+	taskEXIT_CRITICAL();
+#else
+	restore_interrupts(status);
 #if NVS_CORES == 2
      if (lockout){
     	 lockout = multicore_lockout_end_timeout_us (NVS_WAIT);
      }
-#endif
+#endif //NVS_CORES
+#endif //LIB_FREERTOS_KERNEL
+
+     free(mem);
+     rollback();
+     init();
 
      return NVS_OK;
 
