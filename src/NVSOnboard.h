@@ -8,6 +8,8 @@
 #ifndef SRC_NVSONBOARD_H_
 #define SRC_NVSONBOARD_H_
 
+#include <string>
+#include <cstring>
 #include "pico/stdlib.h"
 #include "hardware/flash.h"
 #if CPPUTEST_USE_NEW_MACROS

@@ -4,59 +4,33 @@
 
 #include "CppUTest/TestHarness.h"
 #include "NVSOnboard.h"
-#include <math.h>
-#include <stdio.h>
-#include "pico/multicore.h"
-#include "pico/stdlib.h"
-
-#define LED_PIN 15
 
 
-bool timerCore1CB (repeating_timer_t *rt){
+bool timerCB (repeating_timer_t *rt){
 	int r = 2 * 7;
 	return true;
 }
 
-void core1Entry(){
-	bool on = true;
-	multicore_lockout_victim_init();
-	gpio_init(LED_PIN);
-	gpio_set_dir(LED_PIN, GPIO_OUT);
-	gpio_put(LED_PIN, on);
-	for(;;){
-		for (int i=1; i < 0xFFFF; i++ ){
-			double sq = (double)i;
-			double r = sqrt(sq);
-
-		}
-			on = !on;
-			gpio_put(LED_PIN, on);
-	}
-}
 
 
-
-TEST_GROUP(NVSMulticore){
+TEST_GROUP(NVS){
 	repeating_timer_t xTimer;
     void setup(){
     	add_repeating_timer_us	(
     			1000,
-				timerCore1CB,
+				timerCB,
 				NULL,
 				&xTimer
     	);
-    	 multicore_launch_core1(core1Entry);
 	}
 	 void teardown(){
 		 cancel_repeating_timer (&xTimer);
-		 multicore_reset_core1();
 		 NVSOnboard::delInstance();
-		 gpio_put(LED_PIN, false);
 	 }
 };
 
 
-TEST(NVSMulticore,  AddI8){
+TEST(NVS,  AddI8){
   NVSOnboard * nvs = NVSOnboard::getInstance(true);
   char key[] = "Testi8";
   int8_t v = 23;
@@ -81,7 +55,7 @@ TEST(NVSMulticore,  AddI8){
   CHECK_EQUAL(v, r);
 }
 
-TEST(NVSMulticore,  ChangeI8){
+TEST(NVS,  ChangeI8){
    NVSOnboard * nvs = NVSOnboard::getInstance(true);
 	char key[] = "Testi8";
 	int8_t v   = 101;
@@ -115,7 +89,7 @@ TEST(NVSMulticore,  ChangeI8){
 
 }
 
-TEST(NVSMulticore,  Clear){
+TEST(NVS,  Clear){
 	 NVSOnboard * nvs = NVSOnboard::getInstance();
 	 CHECK_EQUAL(NVS_OK, nvs->clear());
 	 CHECK_EQUAL(0, nvs->numKeys());
@@ -124,7 +98,7 @@ TEST(NVSMulticore,  Clear){
 }
 
 
-TEST(NVSMulticore,  EraseDirty){
+TEST(NVS,  EraseDirty){
    NVSOnboard * nvs = NVSOnboard::getInstance(true);
 	char key[] = "Dirty";
 	int8_t v = 101;
@@ -143,7 +117,7 @@ TEST(NVSMulticore,  EraseDirty){
 }
 
 
-TEST(NVSMulticore,  EraseCommit){
+TEST(NVS,  EraseCommit){
 	NVSOnboard * nvs = NVSOnboard::getInstance(true);
 	char key[] = "Com";
 	int8_t v = 101;
@@ -172,7 +146,7 @@ TEST(NVSMulticore,  EraseCommit){
 
 }
 
-TEST(NVSMulticore,  Rollback){
+TEST(NVS,  Rollback){
    NVSOnboard * nvs = NVSOnboard::getInstance(true);
    char key[] ="Roll";
 	int8_t v = 101;

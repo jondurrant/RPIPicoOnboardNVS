@@ -386,7 +386,12 @@ nvs_err_t NVSOnboard::commit(){
 
 	 //CRITICAL SECTION - NO INTRUP1GT OF MULTIPROCESSOR
 #ifdef LIB_FREERTOS_KERNEL
+#ifdef FREE_RTOS_KERNEL_SMP
+	vTaskSuspendAll();
 	taskENTER_CRITICAL();
+#else
+	taskENTER_CRITICAL();
+#endif //FREE_RTOS_KERNEL_SMP
 #else
 	uint32_t status = save_and_disable_interrupts();
 #if NVS_CORES == 2
@@ -400,11 +405,17 @@ nvs_err_t NVSOnboard::commit(){
 	}
 #endif //NVS_CORES
 #endif //LIB_FREERTOS_KERNEL
+
 	 flash_range_erase(FLASH_WRITE_START, NVS_SIZE);
      flash_range_program(FLASH_WRITE_START, mem, size);
 
 #ifdef LIB_FREERTOS_KERNEL
+#ifdef FREE_RTOS_KERNEL_SMP
+     taskEXIT_CRITICAL();
+     xTaskResumeAll();
+#else
 	taskEXIT_CRITICAL();
+#endif //FREE_RTOS_KERNEL_SMP
 #else
 	restore_interrupts(status);
 #if NVS_CORES == 2
