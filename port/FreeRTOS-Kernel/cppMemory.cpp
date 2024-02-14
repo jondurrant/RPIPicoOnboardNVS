@@ -27,7 +27,3 @@ void operator delete[]( void * ptr ){
 }
 
 
-void* pvPortRealloc(void* ptr, size_t size){
-    vPortFree(ptr);
-    return pvPortMalloc(size);
-}
