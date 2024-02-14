@@ -47,7 +47,11 @@ multicore_lockout_victim_init()
 The library should pick up on the global definition *LIB_FREERTOS_KERNEL* and add dependencies on the FreeRTOS Kernel
 
 ## FreeRTOS Kernel SMP
-I have an intention to add this, though it is not a trivial addition. Drop me a message for progress on this one.
+The library now works with FreeRTOS SMP too. For SMP support you need to also using the additional class NVSAgent. This is a singleton and requires to be started as FreeRTOS Tasks.
+
+Commit should only be run on NVSAgent in SMP mode as this class basically controls the flash write so that core0 always undertakes the write and core1 is paused during the process.
+
+There is a seperate test application and unit tests for SMP under the SMP folder.
 
 
 ## CPPUTests

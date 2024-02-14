@@ -22,9 +22,9 @@ add_executable(${TEST_NAME}
 	TestNVS.cpp
     
     UtestPlatform.cpp
-    Agent.cpp
-    BlinkAgent.cpp
     LoadAgent.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/../src/BlinkAgent.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/../src/Agent.cpp
 )
 
 # Pull in our pico_stdlib which pulls in commonly used features

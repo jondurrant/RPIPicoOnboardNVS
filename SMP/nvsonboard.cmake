@@ -5,6 +5,7 @@ endif ()
 add_library(nvs_onboard STATIC)
 target_sources(nvs_onboard PUBLIC
     ${NVS_ONBOARD_PATH}/src/NVSOnboard.cpp
+    ${NVS_ONBOARD_PATH}/src/NVSAgent.cpp
 )
 
 # Add include directory

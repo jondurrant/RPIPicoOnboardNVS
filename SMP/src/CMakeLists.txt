@@ -2,10 +2,17 @@ include(files.cmake)
 add_executable(${NAME}
         main.cpp
         ${SRC_FILES}
+        Agent.cpp
+        BlinkAgent.cpp
         )
 
 # Pull in our pico_stdlib which pulls in commonly used features
-target_link_libraries(${NAME} pico_stdlib)
+target_link_libraries(${NAME} 
+    pico_stdlib
+    nvs_onboard
+    FreeRTOS-Kernel-Heap4 
+    freertos_unit 
+)
 
 # enable usb output, disable uart output
 pico_enable_stdio_usb(${NAME} 1)

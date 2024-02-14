@@ -10,7 +10,7 @@
 #ifndef TESTFREERTOS_LOADAGENT_H_
 #define TESTFREERTOS_LOADAGENT_H_
 
-#include "../testSMP/Agent.h"
+#include "Agent.h"
 #include "pico/stdlib.h"
 #include "FreeRTOS.h"
 #include "task.h"

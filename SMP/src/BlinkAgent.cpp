@@ -89,7 +89,7 @@ BlinkAgent::~BlinkAgent() {
                   gpio_put(xLedPad, xLedOn);
                   xLastAction = now;
 
-                  printf("%s on %u\n",pName,  (uint8_t)sio_hw->cpuid);
+                  //printf("%s on %u\n",pName,  (uint8_t)sio_hw->cpuid);
 
                   if (!xLedOn){
                 	  xBlinkCount ++;

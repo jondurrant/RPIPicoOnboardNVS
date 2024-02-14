@@ -28,8 +28,6 @@
 #ifndef FREERTOS_CONFIG_H
 #define FREERTOS_CONFIG_H
 
-#include <rp2040_config.h>
-
 /*-----------------------------------------------------------
  * Application specific definitions.
  *
@@ -104,13 +102,19 @@
 #define configMAX_API_CALL_INTERRUPT_PRIORITY   [dependent on processor and application]
 */
 
+#define FREE_RTOS_KERNEL_SMP 1
 #if FREE_RTOS_KERNEL_SMP // set by the RP2040 SMP port of FreeRTOS
 /* SMP port only */
 #define configNUM_CORES                         2
 #define configTICK_CORE                         0
 #define configRUN_MULTIPLE_PRIORITIES           1
 #define configUSE_CORE_AFFINITY                 1
+#define configUSE_PASSIVE_IDLE_HOOK		0
+#else
+#define configNUM_CORES                         1
 #endif
+#define configNUMBER_OF_CORES			configNUM_CORES
+
 
 /* RP2040 specific */
 #define configSUPPORT_PICO_SYNC_INTEROP         1
@@ -140,6 +144,10 @@ to exclude the API function. */
 #define INCLUDE_xQueueGetMutexHolder            1
 
 /* A header file that defines trace macro can be included here. */
+
+#if (configNUMBER_OF_CORES == 1)
+#error configNUMBER_OF_CORES == 1
+#endif
 
 #endif /* FREERTOS_CONFIG_H */
 

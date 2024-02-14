@@ -17,6 +17,7 @@
 #include "CppUTest/CommandLineTestRunner.h"
 #include "BlinkAgent.h"
 #include "LoadAgent.h"
+#include "NVSAgent.h"
 
 
 
@@ -101,12 +102,16 @@ void main_task(void* params){
 	LoadAgent load;
 	load.start("Load", TASK_PRIORITY);
 
+
+	NVSAgent::getInstance()->start();
+
 	printf("Start Tests\n");
 
 	//Run Tests
 	const char *av[1] = {"test"};
+	//const char *av[3] = {"test", "-g", "Lock"};
 	const  int ac = 1;
-	//int res = CommandLineTestRunner::RunAllTests(ac, av);
+	int res = CommandLineTestRunner::RunAllTests(ac, av);
 
 	while (true){
 

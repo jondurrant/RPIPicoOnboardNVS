@@ -10,7 +10,7 @@
 #ifndef BLINKAGENT_H_
 #define BLINKAGENT_H_
 
-#include "../testSMP/Agent.h"
+#include "Agent.h"
 #include "pico/stdlib.h"
 #include "FreeRTOS.h"
 #include "task.h"

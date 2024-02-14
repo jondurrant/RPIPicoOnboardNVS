@@ -1,9 +1,10 @@
 /***
- * Functional failure test
+ * Test for FreeRTPS SMP use of NVS
  */
 
 #include "CppUTest/TestHarness.h"
 #include "NVSOnboard.h"
+#include "NVSAgent.h"
 
 
 bool timerCB (repeating_timer_t *rt){
@@ -46,7 +47,8 @@ TEST(NVS,  AddI8){
   CHECK_EQUAL(true,  nvs->isDirty());
 
   //Commit
-  CHECK_EQUAL(NVS_OK,  nvs->commit());
+  //CHECK_EQUAL(NVS_OK,  nvs->commit());
+  NVSAgent::getInstance()->commit();
 
   //Check key stored
   CHECK_EQUAL(1, nvs->numKeys());
@@ -69,7 +71,8 @@ TEST(NVS,  ChangeI8){
 	CHECK_EQUAL(v, r);
 
 	//Commit
-	CHECK_EQUAL(NVS_OK,  nvs->commit());
+	//CHECK_EQUAL(NVS_OK,  nvs->commit());
+	NVSAgent::getInstance()->commit();
 	CHECK_EQUAL(1, nvs->numKeys());
 	CHECK_EQUAL(NVS_OK,  nvs->get_i8(key, &r));
 	CHECK_EQUAL(v, r);
@@ -82,7 +85,8 @@ TEST(NVS,  ChangeI8){
 	CHECK_EQUAL(nv, r);
 
 	//Commit
-	CHECK_EQUAL(NVS_OK,  nvs->commit());
+	//CHECK_EQUAL(NVS_OK,  nvs->commit());
+	 NVSAgent::getInstance()->commit();
 	CHECK_EQUAL(1, nvs->numKeys());
 	CHECK_EQUAL(NVS_OK,  nvs->get_i8(key, &r));
 	CHECK_EQUAL(nv, r);
@@ -93,7 +97,8 @@ TEST(NVS,  Clear){
 	 NVSOnboard * nvs = NVSOnboard::getInstance();
 	 CHECK_EQUAL(NVS_OK, nvs->clear());
 	 CHECK_EQUAL(0, nvs->numKeys());
-	 CHECK_EQUAL(NVS_OK,  nvs->commit());
+	 //CHECK_EQUAL(NVS_OK,  nvs->commit());
+	 NVSAgent::getInstance()->commit();
 	 CHECK_EQUAL(0, nvs->numKeys());
 }
 
@@ -127,7 +132,8 @@ TEST(NVS,  EraseCommit){
 	CHECK_EQUAL(1, nvs->numKeys());
 	//printf("Added %s\n", key);
 	//nvs->printNVS();
-	CHECK_EQUAL(NVS_OK,  nvs->commit());
+	//CHECK_EQUAL(NVS_OK,  nvs->commit());
+	 NVSAgent::getInstance()->commit();
 	CHECK_EQUAL(1, nvs->numKeys());
 	//printf("Commit\n");
 	//nvs->printNVS();
@@ -138,7 +144,8 @@ TEST(NVS,  EraseCommit){
 	CHECK_EQUAL(NVS_ERR_NOT_FOUND,  nvs->get_i8(key, &r));
 	CHECK_EQUAL(0, nvs->numKeys());
 
-	CHECK_EQUAL(NVS_OK,  nvs->commit());
+	//CHECK_EQUAL(NVS_OK,  nvs->commit());
+	NVSAgent::getInstance()->commit();
 	//printf("Commit %s\n", key);
 	//nvs->printNVS();
 	CHECK_EQUAL(NVS_ERR_NOT_FOUND,  nvs->get_i8(key, &r));
@@ -162,7 +169,8 @@ TEST(NVS,  Rollback){
 	//Roll back after commit
 	CHECK_EQUAL(NVS_OK, nvs->set_i8(key,  v));
 	CHECK_EQUAL(1, nvs->numKeys());
-	CHECK_EQUAL(NVS_OK, nvs->commit());
+	//CHECK_EQUAL(NVS_OK, nvs->commit());
+	NVSAgent::getInstance()->commit();
 	CHECK_EQUAL(NVS_OK, nvs->rollback());
 	CHECK_EQUAL(1, nvs->numKeys());
 
