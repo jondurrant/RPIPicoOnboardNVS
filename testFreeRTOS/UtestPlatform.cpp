@@ -95,7 +95,7 @@ void (*PlatformSpecificRestoreJumpBuffer)() = PlatformSpecificRestoreJumpBufferI
 
 ///////////// Time in millis
 
-static long TimeInMillisImplementation()
+static long unsigned int TimeInMillisImplementation()
 {
 	return to_ms_since_boot(get_absolute_time());
 }
@@ -115,7 +115,7 @@ static const char* TimeStringImplementation()
     return dateTime;
 }
 
-long (*GetPlatformSpecificTimeInMillis)() = TimeInMillisImplementation;
+long unsigned int (*GetPlatformSpecificTimeInMillis)() = TimeInMillisImplementation;
 const char* (*GetPlatformSpecificTimeString)() = TimeStringImplementation;
 
 /* Wish we could add an attribute to the format for discovering mis-use... but the __attribute__(format) seems to not work on va_list */

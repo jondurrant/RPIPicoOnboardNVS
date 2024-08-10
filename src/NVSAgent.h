@@ -97,10 +97,10 @@ protected:
 
 
 	//The state of the Core1 process
-	bool xCore1Paused = false;
+	volatile bool xCore1Paused = false;
 
 	//Request to resume on core1
-	bool xCore1Resume = false;
+	volatile bool xCore1Resume = false;
 
 private:
 	NVSAgent();
