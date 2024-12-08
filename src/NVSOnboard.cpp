@@ -461,7 +461,7 @@ size_t NVSOnboard::pagesSize(){
 		}
 		 it++;
 	}
-	size = 2 * sizeof(uint32_t ) + indexSize + dataSize;
+	size = sizeof(nvs_header_t) + indexSize + dataSize;
 	pagesSize = (size / 256) * 256;
 	if (size > (pagesSize)){
 		pagesSize += 256;
