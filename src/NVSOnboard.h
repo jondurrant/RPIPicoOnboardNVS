@@ -64,6 +64,8 @@ typedef enum {
     NVS_TYPE_U64   = 0x08,  /*!< Type uint64_t */
     NVS_TYPE_I64   = 0x18,  /*!< Type int64_t */
     NVS_TYPE_STR   = 0x21,  /*!< Type string */
+	NVS_TYPE_DOUBLE   = 0x22,  /*!< Type Double */
+	NVS_TYPE_BOOL   = 0x23,  /*!< Type Bool */
     NVS_TYPE_BLOB  = 0x42,  /*!< Type blob */
 	NVS_TYPE_ERASE  = 0xFE,
     NVS_TYPE_ANY   = 0xff   /*!< Must be last */
@@ -118,6 +120,14 @@ public:
 	 * Distructor
 	 */
 	virtual ~NVSOnboard();
+
+	/***
+	 * Set an bool value in NVS
+	 * @param key
+	 * @param value
+	 * @return for return values see @set
+	 */
+	nvs_err_t set_bool ( const char* key, bool value);
 
 	/***
 	 * Set an Int8 value in NVS
@@ -184,6 +194,14 @@ public:
 	nvs_err_t set_u64 ( const char* key, uint64_t value);
 
 	/***
+	 * Set an double value in NVS
+	 * @param key
+	 * @param value
+	 * @return for return values see @set
+	 */
+	nvs_err_t set_double ( const char* key, double value);
+
+	/***
 	 * Set a string value in NVS
 	 * @param key
 	 * @param value - point to cjar * string
@@ -199,6 +217,14 @@ public:
 	 * @return for return values see @set
 	 */
 	nvs_err_t set_blob( const char* key, const void* value, size_t length);
+
+	/***
+	 * return the value stored in the key or not found error
+	 * @param key  used for storing the value
+	 * @param out_value
+	 * @return NVS_OK if found. See @get for full list of errors
+	 */
+	nvs_err_t get_bool ( const char* key, bool* out_value);
 
 	/***
 	 * return the value stored in the key or not found error
@@ -263,6 +289,14 @@ public:
 	 * @return NVS_OK if found. See @get for full list of errors
 	 */
 	nvs_err_t get_u64 ( const char* key, uint64_t* out_value);
+
+	/***
+	 * return the value stored in the key or not found error
+	 * @param key  used for storing the value
+	 * @param out_value
+	 * @return NVS_OK if found. See @get for full list of errors
+	 */
+	nvs_err_t get_double( const char* key, double* out_value);
 
 	/***
 	 * return the value stored in the key or not found error
@@ -348,6 +382,14 @@ public:
 	 */
 	void printNVS();
 
+
+	/***
+	 * Returns size of the given key in storage
+	 * @param key
+	 * @return 0 if not found
+	 */
+	size_t size(const char * key);
+
 protected:
 	/***
 	 * Constructor
@@ -388,8 +430,7 @@ protected:
 	nvs_err_t get(const char* key,  nvs_type_t type, size_t * len, void * out_value);
 
 
-private:
-	static NVSOnboard * pSingleton;
+
 
 	/***
 	 * Validate Key is ok
@@ -419,6 +460,9 @@ private:
 #ifdef LIB_FREERTOS_KERNEL
 	SemaphoreHandle_t xWriteSemaphore = NULL;
 #endif
+
+private:
+	static NVSOnboard * pSingleton;
 
 };
 

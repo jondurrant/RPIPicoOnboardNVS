@@ -174,7 +174,9 @@ nvs_err_t NVSOnboard::get(
 	return NVS_ERR_NOT_FOUND;
 }
 
-
+nvs_err_t NVSOnboard::set_bool ( const char* key, bool value){
+	return set(key, NVS_TYPE_BOOL, 1, &value);
+}
 
 nvs_err_t NVSOnboard::set_i8 ( const char* key, int8_t value){
 	return set(key, NVS_TYPE_I8, 1, &value);
@@ -208,6 +210,11 @@ nvs_err_t NVSOnboard::set_u64 ( const char* key, uint64_t value){
 	return set(key, NVS_TYPE_U64, 8, &value);
 }
 
+
+nvs_err_t NVSOnboard::set_double ( const char* key, double value){
+	return set(key, NVS_TYPE_DOUBLE, sizeof(double), &value);
+}
+
 nvs_err_t NVSOnboard::set_str ( const char* key, const char* value){
 	return set(key, NVS_TYPE_STR, strlen(value)+1, value);
 }
@@ -219,6 +226,10 @@ nvs_err_t NVSOnboard::set_blob(
 	return set(key, NVS_TYPE_BLOB, length, value);
 }
 
+nvs_err_t NVSOnboard::get_bool ( const char* key, bool* out_value){
+	size_t len = 1;
+	return get(key, NVS_TYPE_BOOL, &len, out_value);
+}
 
 nvs_err_t NVSOnboard::get_i8 ( const char* key, int8_t* out_value){
 	size_t len = 1;
@@ -258,6 +269,11 @@ nvs_err_t NVSOnboard::get_i64 ( const char* key, int64_t* out_value){
 nvs_err_t NVSOnboard::get_u64 ( const char* key, uint64_t* out_value){
 	size_t len = 8;
 	return get(key, NVS_TYPE_U64, &len, out_value);
+}
+
+nvs_err_t NVSOnboard::get_double( const char* key, double* out_value){
+	size_t len = sizeof(double);
+	return get(key, NVS_TYPE_DOUBLE, &len, out_value);
 }
 
 nvs_err_t NVSOnboard::get_str (
@@ -606,7 +622,7 @@ void NVSOnboard::printNVS(){
 				printf("%s [ERASE] %d\n", it->first.c_str(), 0);
 				erase++;
 			} else {
-				printf("%s [CLEAN] %d\n", it->first.c_str(), it->second->len);
+				printf("%s [DIRTY] %d\n", it->first.c_str(), it->second->len);
 			}
 		}
 		count++;
@@ -640,3 +656,38 @@ nvs_err_t NVSOnboard::clear(){
 	return NVS_OK;
 }
 
+size_t NVSOnboard::size(const char * key){
+	size_t resSize = 0;
+	//Check key is valid
+	nvs_err_t res;
+	res = validKey(key);
+	if (res != NVS_OK){
+		return resSize;
+	}
+
+	// Check if on dirty list
+	// On Change the dirty list briefly become unstable, so puting in a semaphore
+	if (xDirty.count(key) > 0){
+#ifdef LIB_FREERTOS_KERNEL
+		if (xWriteSemaphore != NULL){
+			if (xSemaphoreTake(xWriteSemaphore, NVS_WAIT/1000) != pdTRUE){
+				return NVS_ERR_LOCK_FAILED;
+			}
+		}
+#endif
+		nvs_entry_t * old = xDirty[key];
+		if (old->type != NVS_TYPE_ERASE){
+			resSize = old->len;
+
+		}
+#ifdef LIB_FREERTOS_KERNEL
+		if (xWriteSemaphore != NULL){
+			xSemaphoreGive(xWriteSemaphore);
+		}
+#endif
+	} else if (xClean.count(key) > 0){
+		nvs_entry_t * old = xClean[key];
+		resSize = old->len;
+	}
+	return resSize;
+}
