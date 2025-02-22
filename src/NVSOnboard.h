@@ -66,6 +66,7 @@ typedef enum {
     NVS_TYPE_STR   = 0x21,  /*!< Type string */
 	NVS_TYPE_DOUBLE   = 0x22,  /*!< Type Double */
 	NVS_TYPE_BOOL   = 0x23,  /*!< Type Bool */
+	NVS_TYPE_PWD   = 0x24,  /*!< Type Password */
     NVS_TYPE_BLOB  = 0x42,  /*!< Type blob */
 	NVS_TYPE_ERASE  = 0xFE,
     NVS_TYPE_ANY   = 0xff   /*!< Must be last */
@@ -210,6 +211,14 @@ public:
 	nvs_err_t set_str ( const char* key, const char* value);
 
 	/***
+	 * Set a string password value in NVS
+	 * @param key
+	 * @param value - point to cjar * string
+	 * @return for return values see @set
+	 */
+	nvs_err_t set_pwd ( const char* key, const char* value);
+
+	/***
 	 * Set a blob value in NVS
 	 * @param key
 	 * @param value - pointer to blob
@@ -316,6 +325,17 @@ public:
 	 * @param out_value
 	 * @return NVS_OK if found. See @get for full list of errors
 	 */
+	nvs_err_t get_pwd ( const char* key, char* out_value, size_t* length);
+
+
+	/***
+	 * return the value stored in the key or not found error
+	 * @param key  used for storing the value
+	 * @param length - Input is Max size of out_value to write to.
+	 * Then set with the length actualy returned
+	 * @param out_value
+	 * @return NVS_OK if found. See @get for full list of errors
+	 */
 	nvs_err_t get_blob( const char* key, void* out_value, size_t* length);
 
 	/***
@@ -362,6 +382,13 @@ public:
 	 * @return true if key is used
 	 */
 	bool contains(const char *key);
+
+	/***
+	 * Returns type for key
+	 * @param key
+	 * @return type
+	 */
+	nvs_type_t type(const char *key);
 
 	/***
 	 * Returns the number of keys in use

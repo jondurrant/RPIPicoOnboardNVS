@@ -174,6 +174,16 @@ nvs_err_t NVSOnboard::get(
 	return NVS_ERR_NOT_FOUND;
 }
 
+nvs_type_t NVSOnboard::type(const char *key){
+	if (xDirty.count(key) > 0){
+		return xDirty[key]->type;
+	} else if (xClean.count(key) > 0){
+		return xClean[key]->type;
+	} else {
+		return NVS_TYPE_ANY;
+	}
+}
+
 nvs_err_t NVSOnboard::set_bool ( const char* key, bool value){
 	return set(key, NVS_TYPE_BOOL, 1, &value);
 }
@@ -217,6 +227,10 @@ nvs_err_t NVSOnboard::set_double ( const char* key, double value){
 
 nvs_err_t NVSOnboard::set_str ( const char* key, const char* value){
 	return set(key, NVS_TYPE_STR, strlen(value)+1, value);
+}
+
+nvs_err_t NVSOnboard::set_pwd( const char* key, const char* value){
+	return set(key, NVS_TYPE_PWD, strlen(value)+1, value);
 }
 
 nvs_err_t NVSOnboard::set_blob(
@@ -281,6 +295,13 @@ nvs_err_t NVSOnboard::get_str (
 		char* out_value,
 		size_t* length){
 	return get(key, NVS_TYPE_STR,  length, out_value);
+}
+
+nvs_err_t NVSOnboard::get_pwd (
+		const char* key,
+		char* out_value,
+		size_t* length){
+	return get(key, NVS_TYPE_PWD,  length, out_value);
 }
 
 nvs_err_t NVSOnboard::get_blob(
